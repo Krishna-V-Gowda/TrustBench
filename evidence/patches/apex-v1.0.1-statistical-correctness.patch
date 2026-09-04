@@ -1,0 +1,157 @@
+--- a/assets/js/app.js
++++ b/assets/js/app.js
+@@ -426,7 +426,15 @@
+     row.push(cell.trim());
+     if (row.some((item) => item !== '')) rows.push(row);
+     if (rows.length < 2) throw new Error('CSV requires one header row and at least one data row.');
+-    const headers = rows[0].map((h, index) => h || `Column_${index + 1}`);
++    const usedHeaders = new Set();
++    const headers = rows[0].map((header, index) => {
++      const base = header || `Column_${index + 1}`;
++      let candidate = base;
++      let suffix = 2;
++      while (usedHeaders.has(candidate)) candidate = `${base}_${suffix++}`;
++      usedHeaders.add(candidate);
++      return candidate;
++    });
+     return rows.slice(1).map((values) => {
+       const obj = {};
+       headers.forEach((header, index) => {
+@@ -463,10 +471,13 @@
+   }
+ 
+   function skewness(values) {
+-    if (values.length < 3) return 0;
++    const n = values.length;
++    if (n < 3) return 0;
+     const avg = mean(values);
+-    const s = std(values, avg) || 1;
+-    return values.reduce((sum, value) => sum + ((value - avg) / s) ** 3, 0) / values.length;
++    const s = std(values, avg);
++    if (!s) return 0;
++    const standardizedThirdMoment = values.reduce((sum, value) => sum + ((value - avg) / s) ** 3, 0);
++    return (n / ((n - 1) * (n - 2))) * standardizedThirdMoment;
+   }
+ 
+   function pearson(xs, ys) {
+@@ -498,7 +509,9 @@
+       const unique = new Set(present.map((value) => String(value))).size;
+       let type = 'categorical';
+       if (numericRatio >= 0.82 && numeric.length >= 3) type = 'numeric';
+-      if (unique === present.length && present.length > data.length * 0.7 && type !== 'numeric') type = 'identifier';
++      const normalizedName = String(column).toLowerCase().replace(/[^a-z0-9]+/g, '_');
++      const idLikeName = /(^id$|_id$|^id_|identifier|uuid|guid|account_id|customer_id|user_id|order_id|record_id|row_id|key$)/.test(normalizedName);
++      if (unique === present.length && present.length > data.length * 0.7 && (type !== 'numeric' || idLikeName)) type = 'identifier';
+       if (present.every((value) => ['yes', 'no', 'true', 'false', '0', '1'].includes(String(value).toLowerCase()))) type = 'binary';
+       return {
+         name: column,
+@@ -1291,7 +1304,7 @@
+     ['Visuals', 'Missingness Map', 'A missingness map shows where data is absent by row and column position.', 'Useful for detecting clustered missingness.'],
+     ['Statistics', 'Mean vs Median', 'Mean is sensitive to extreme values; median is robust for skewed data.', 'Use both in EDA.'],
+     ['Statistics', 'Standard Deviation', 'Standard deviation measures spread around the mean and is most interpretable for roughly symmetric distributions.', 'Pair it with IQR for robustness.'],
+-    ['Statistics', 'Skewness', 'Skewness describes asymmetry. Positive skew has a long right tail; negative skew has a long left tail.', 'Skew affects imputation and modeling decisions.'],
++    ['Statistics', 'Skewness', 'Adjusted Fisher–Pearson skewness describes asymmetry. Positive skew has a long right tail; negative skew has a long left tail.', 'Estimator choice matters; this release uses the bias-corrected sample definition.'],
+     ['Cleaning', 'Imputation', 'Imputation fills missing values using strategies such as median, mode, KNN, or model-based methods.', 'Do not hide meaningful missingness.'],
+     ['Cleaning', 'Encoding', 'Encoding converts categorical variables into numeric representations for algorithms.', 'One-hot is safe for nominal variables.'],
+     ['Cleaning', 'Scaling', 'Scaling normalizes numeric feature ranges and is essential for distance-based models.', 'Keep original units for human-facing EDA.'],
+@@ -1683,6 +1696,17 @@
+     if (!target || !name) return false;
+     const safeTarget = safeName(target);
+     if (name === target || name.startsWith(`${safeTarget}_`)) return true;
++    if (state.data.length >= 3 && state.data.every((row) => {
++      const candidate = row[name];
++      const targetValue = row[target];
++      const candidateMissing = isMissing(candidate);
++      const targetMissing = isMissing(targetValue);
++      if (candidateMissing || targetMissing) return candidateMissing === targetMissing;
++      const candidateNumber = toNumber(candidate);
++      const targetNumber = toNumber(targetValue);
++      if (candidateNumber !== null && targetNumber !== null) return candidateNumber === targetNumber;
++      return String(candidate) === String(targetValue);
++    })) return true;
+     const feature = state.engineeredFeatures.find((item) => item.name === name);
+     if (!feature) return false;
+     const source = String(feature.source || '');
+@@ -1899,9 +1923,12 @@
+       } else if (col.type !== 'numeric' && targetMeta?.type !== 'numeric') {
+         relevance = cramersV(col.name, target);
+         reason = `categorical association = ${fmt(relevance, 2)}`;
++      } else if (col.type !== 'numeric' && targetMeta?.type === 'numeric') {
++        relevance = etaSquaredNumericByCategory(target, col.name);
++        reason = `target group separation = ${fmt(relevance, 2)}`;
+       } else {
+-        relevance = Math.min(1, (col.unique || 1) / Math.max(2, p.rows));
+-        reason = 'categorical predictor for numeric target';
++        relevance = 0;
++        reason = 'unsupported relevance pairing';
+       }
+       const missingPenalty = col.missingPct * .5;
+       const lowVariancePenalty = col.unique <= 1 ? .7 : 0;
+@@ -1926,17 +1953,27 @@
+   function cramersV(a, b) {
+     const rows = state.data.filter((r) => !isMissing(r[a]) && !isMissing(r[b]));
+     if (rows.length < 3) return 0;
+-    const aLevels = [...new Set(rows.map((r) => String(r[a])))].slice(0, 20);
+-    const bLevels = [...new Set(rows.map((r) => String(r[b])))].slice(0, 20);
++    const rowCounts = new Map();
++    const columnCounts = new Map();
++    const jointCounts = new Map();
++    rows.forEach((row) => {
++      const left = String(row[a]);
++      const right = String(row[b]);
++      rowCounts.set(left, (rowCounts.get(left) || 0) + 1);
++      columnCounts.set(right, (columnCounts.get(right) || 0) + 1);
++      if (!jointCounts.has(left)) jointCounts.set(left, new Map());
++      const nested = jointCounts.get(left);
++      nested.set(right, (nested.get(right) || 0) + 1);
++    });
+     const total = rows.length;
+-    const table = aLevels.map(() => bLevels.map(() => 0));
+-    rows.forEach((r) => { const i = aLevels.indexOf(String(r[a])); const j = bLevels.indexOf(String(r[b])); if (i >= 0 && j >= 0) table[i][j]++; });
+-    const rowSums = table.map((row) => row.reduce((s, v) => s + v, 0));
+-    const colSums = bLevels.map((_, j) => table.reduce((s, row) => s + row[j], 0));
+-    let chi = 0;
+-    table.forEach((row, i) => row.forEach((obs, j) => { const expected = rowSums[i] * colSums[j] / total; if (expected) chi += (obs - expected) ** 2 / expected; }));
+-    const k = Math.min(aLevels.length - 1, bLevels.length - 1) || 1;
+-    return clamp(Math.sqrt(chi / (total * k)), 0, 1);
++    let observedSquaredOverExpected = 0;
++    jointCounts.forEach((nested, left) => nested.forEach((observed, right) => {
++      const expected = rowCounts.get(left) * columnCounts.get(right) / total;
++      if (expected) observedSquaredOverExpected += (observed ** 2) / expected;
++    }));
++    const chi = Math.max(0, observedSquaredOverExpected - total);
++    const k = Math.min(rowCounts.size - 1, columnCounts.size - 1);
++    return k > 0 ? clamp(Math.sqrt(chi / (total * k)), 0, 1) : 0;
+   }
+ 
+   function maxRedundancy(col, target) {
+@@ -1981,11 +2018,15 @@
+   }
+ 
+   function standardizedMatrix(cols) {
+-    const summaries = state.profile.numericSummaries;
+-    return state.data.map((row) => cols.map((col) => {
+-      const v = toNumber(row[col]);
+-      const s = summaries[col];
+-      return v === null || !s?.std ? 0 : (v - s.mean) / s.std;
++    const columnStats = cols.map((col) => {
++      const observed = state.data.map((row) => toNumber(row[col])).filter((value) => value !== null);
++      const avg = mean(observed) ?? 0;
++      const filled = state.data.map((row) => toNumber(row[col]) ?? avg);
++      return { mean: avg, std: std(filled, avg), filled };
++    });
++    return state.data.map((_, rowIndex) => cols.map((__, columnIndex) => {
++      const stats = columnStats[columnIndex];
++      return stats.std ? (stats.filled[rowIndex] - stats.mean) / stats.std : 0;
+     }));
+   }
+ 
+@@ -2008,7 +2049,7 @@
+   }
+ 
+   function computePCA() {
+-    const cols = predictorNumericColumns().slice(0, 10);
++    const cols = predictorNumericColumns();
+     if (cols.length < 2 || state.data.length < 3) return null;
+     const X = standardizedMatrix(cols);
+     const A = covarianceMatrix(X);

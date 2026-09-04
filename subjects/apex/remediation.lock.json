@@ -1,0 +1,19 @@
+{
+  "subject": "EDA InsightLab Apex browser statistics engine \u2014 v1.0.1 retained release source",
+  "repository": "https://github.com/Krishna-V-Gowda/EDA-InsightLab-Apex",
+  "relative_path": "assets/js/app.js",
+  "sha256": "51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df",
+  "lock_scope": "file-content fingerprint",
+  "baseline_sha256": "a15f8c9830c2729392e02e54abe2c62a3caba885b08f3aba8b575d522a2ef395",
+  "methodology_version": "0.1.0",
+  "result": {
+    "pass": 15,
+    "divergence": 0,
+    "limitation": 1,
+    "failure": 0,
+    "high_priority_non_pass": 0,
+    "total": 16
+  },
+  "note": "This fingerprint identifies the reviewed v1.0.1 source. Add the immutable public commit SHA after controlled publication.",
+  "bundled_snapshot": "snapshots/apex-v1.0.1-app.js"
+}

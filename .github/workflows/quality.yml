@@ -1,0 +1,33 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install --requirement requirements-lock.txt
+      - run: python -m pip install --no-deps -e .
+      - name: Fetch fingerprint-locked Apex subject
+        run: echo "TRUSTBENCH_APEX_SOURCE=$(./scripts/fetch_apex_subject.sh)" >> "$GITHUB_ENV"
+      - name: Test and regenerate evidence
+        env:
+          SOURCE_DATE_EPOCH: '1788393600'
+        run: ./scripts/verify_delivery.sh "$TRUSTBENCH_APEX_SOURCE"
+      - name: Ensure generated evidence is committed
+        run: git diff --exit-code -- evidence/reports

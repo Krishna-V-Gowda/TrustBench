@@ -1,0 +1,26 @@
+{
+  "schema_version": "apex.verification-transition.v1",
+  "release": "1.0.1",
+  "generated_at_utc": "2026-09-03T00:00:00Z",
+  "subject": "assets/js/app.js",
+  "before_sha256": "a15f8c9830c2729392e02e54abe2c62a3caba885b08f3aba8b575d522a2ef395",
+  "after_sha256": "51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df",
+  "trustbench_methodology": "0.1.0",
+  "before_summary": {
+    "pass": 7,
+    "divergence": 2,
+    "limitation": 4,
+    "failure": 3,
+    "high_priority_non_pass": 4,
+    "total": 16
+  },
+  "after_summary": {
+    "pass": 15,
+    "divergence": 0,
+    "limitation": 1,
+    "failure": 0,
+    "high_priority_non_pass": 0,
+    "total": 16
+  },
+  "remaining_boundary": "Missing-token vocabulary is deterministic but not configurable per dataset or column."
+}

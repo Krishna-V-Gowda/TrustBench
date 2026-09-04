@@ -1,0 +1,391 @@
+{
+  "schema_version": "trustbench.report.v1",
+  "subject": "EDA InsightLab Apex browser statistics engine",
+  "subject_path": "assets/js/app.js",
+  "subject_sha256": "51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df",
+  "generated_at_utc": "2026-09-03T00:00:00Z",
+  "environment": {
+    "python": "3.13.5",
+    "python_implementation": "CPython",
+    "node": "v22.16.0",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scipy": "1.17.0",
+    "scikit_learn": "1.8.0",
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.41"
+  },
+  "methodology_version": "0.1.0",
+  "elapsed_seconds": 0.0,
+  "summary": {
+    "pass": 15,
+    "divergence": 0,
+    "limitation": 1,
+    "failure": 0,
+    "high_priority_non_pass": 0,
+    "total": 16
+  },
+  "findings": [
+    {
+      "id": "TB-APEX-001",
+      "title": "Exact-source extraction is fingerprint-locked",
+      "area": "adapter integrity",
+      "status": "pass",
+      "severity": "info",
+      "claim": "The verifier executes selected functions extracted from the supplied Apex app.js rather than a rewritten statistical implementation.",
+      "observed": {
+        "sha256": "51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df",
+        "function_count": 27
+      },
+      "reference": {
+        "python_sha256": "51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df",
+        "required_functions": 27
+      },
+      "evidence": "Node and Python independently hashed the same source; SHA-256 51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df.",
+      "recommendation": "Keep the hash in every published report and fail closed when extraction anchors change."
+    },
+    {
+      "id": "TB-APEX-002",
+      "title": "Core numeric primitives agree with reference libraries",
+      "area": "descriptive statistics",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Linear quartiles, sample standard deviation, and pairwise-complete Pearson correlation should match NumPy-compatible definitions.",
+      "observed": {
+        "q1": 2,
+        "q3": 4,
+        "sample_std": 7.905694150421,
+        "pearson": 1
+      },
+      "reference": {
+        "q1": 2.0,
+        "q3": 4.0,
+        "sample_std": 7.905694150421,
+        "pearson": 1.0
+      },
+      "evidence": "Functions begin near app.js lines 455, 468, and 483.",
+      "recommendation": "Promote these checks into permanent regression tests with boundary, constant-vector, and non-finite cases."
+    },
+    {
+      "id": "TB-APEX-003",
+      "title": "Skewness agrees with a named Fisher-Pearson estimator",
+      "area": "descriptive statistics",
+      "status": "pass",
+      "severity": "info",
+      "claim": "A displayed skewness value needs a named estimator and should agree with a documented statistical convention.",
+      "observed": {
+        "apex": 1.998334663318,
+        "matched_estimator": "adjusted Fisher-Pearson"
+      },
+      "reference": {
+        "scipy_bias_true": 1.153739055798,
+        "scipy_bias_false": 1.998334663318
+      },
+      "evidence": "The implementation near app.js line 473 matches adjusted Fisher-Pearson.",
+      "recommendation": "Keep the estimator named in methodology and retain golden cases."
+    },
+    {
+      "id": "TB-APEX-004",
+      "title": "Quoted CSV fields survive commas, escaped quotes, and embedded newlines",
+      "area": "ingestion",
+      "status": "pass",
+      "severity": "info",
+      "claim": "The local CSV parser should preserve common quoted-field semantics.",
+      "observed": [
+        {
+          "name": "alpha, beta",
+          "note": "said \"hello\"",
+          "value": 3
+        },
+        {
+          "name": "line two",
+          "note": "embedded\nnewline",
+          "value": 4
+        }
+      ],
+      "reference": [
+        {
+          "name": "alpha, beta",
+          "note": "said \"hello\"",
+          "value": 3
+        },
+        {
+          "name": "line two",
+          "note": "embedded\nnewline",
+          "value": 4
+        }
+      ],
+      "evidence": "Exercised the exact parser beginning near app.js line 398.",
+      "recommendation": "Retain this as a regression fixture and add BOM, CR-only, blank-header, and malformed-quote cases."
+    },
+    {
+      "id": "TB-APEX-005",
+      "title": "Duplicate CSV headers are handled without data loss",
+      "area": "ingestion",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Every input field should remain addressable or ingestion should reject an ambiguous schema.",
+      "observed": [
+        {
+          "measure": 1,
+          "measure_2": 2
+        }
+      ],
+      "reference": {
+        "acceptable_behaviour": [
+          "reject duplicate headers",
+          "deterministically rename to measure and measure_2"
+        ]
+      },
+      "evidence": "The subject preserves both values or rejects the ambiguous schema explicitly.",
+      "recommendation": "Retain duplicate-header fixtures, including three-way collisions and blank names."
+    },
+    {
+      "id": "TB-APEX-006",
+      "title": "ID-like high-cardinality numeric keys are protected",
+      "area": "schema inference",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Identifier inference should not depend on a column being nonnumeric; integer keys must be protected from correlations, scaling, feature ranking, and PCA.",
+      "observed": {
+        "account_id_type": "identifier",
+        "unique_ratio": 1.0
+      },
+      "reference": {
+        "expected_semantic_type": "identifier or explicit unknown/high-cardinality numeric"
+      },
+      "evidence": "The ID-like numeric column is classified as an identifier and excluded from numerical analysis.",
+      "recommendation": "Retain semantic-name and override tests; document false-positive boundaries for continuous high-cardinality variables."
+    },
+    {
+      "id": "TB-APEX-007",
+      "title": "Duplicate and IQR diagnostic counts match the declared rules",
+      "area": "profiling",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Exact-row duplicate counting and linear-quartile 1.5\u00d7IQR flags should be independently reproducible.",
+      "observed": {
+        "duplicates": 1,
+        "x_outliers": 1,
+        "fences": [
+          -0.625,
+          6.375
+        ]
+      },
+      "reference": {
+        "duplicates": 1,
+        "x_outliers": 1,
+        "fences": [
+          -0.625,
+          6.375
+        ]
+      },
+      "evidence": "Computed through computeProfile beginning near app.js line 528.",
+      "recommendation": "Add fixtures that distinguish row count, distinct duplicate groups, and extra copies; name the quartile interpolation method in documentation."
+    },
+    {
+      "id": "TB-APEX-008",
+      "title": "Eta-squared group separation matches the reference decomposition",
+      "area": "feature relevance",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Numeric-predictor versus categorical-target relevance should equal between-group sum of squares divided by total sum of squares.",
+      "observed": 0.964285714286,
+      "reference": 0.964285714286,
+      "evidence": "Exercised etaSquaredNumericByCategory near app.js line 1941.",
+      "recommendation": "Add missing groups, single-level targets, imbalanced groups, and invariance under label renaming."
+    },
+    {
+      "id": "TB-APEX-009",
+      "title": "Low-cardinality Cramer's V matches the uncorrected definition",
+      "area": "feature relevance",
+      "status": "pass",
+      "severity": "info",
+      "claim": "For complete low-cardinality tables, Apex should match the explicitly documented raw Cramer's V formula.",
+      "observed": 0.333333333333,
+      "reference": {
+        "raw": 0.333333333333,
+        "bias_corrected": 0.0
+      },
+      "evidence": "The implementation near app.js line 1953 uses sqrt(chi2 / (n * min(r-1,c-1))) without finite-sample correction.",
+      "recommendation": "Label the statistic as uncorrected Cramer's V and optionally expose a bias-corrected mode for small or wide tables."
+    },
+    {
+      "id": "TB-APEX-010",
+      "title": "High-cardinality Cramer's V is row-order invariant",
+      "area": "feature relevance",
+      "status": "pass",
+      "severity": "info",
+      "claim": "A categorical association statistic must be invariant to row order.",
+      "observed": {
+        "original_order": 0.57735026919,
+        "reordered": 0.57735026919,
+        "absolute_change": 0.0
+      },
+      "reference": {
+        "raw_cramers_v_both_orders": 0.57735026919,
+        "property": "row-order invariant"
+      },
+      "evidence": "Both row orders reproduce the full-table raw Cramer's V reference.",
+      "recommendation": "Retain row permutation, label permutation, and sparse high-cardinality tests."
+    },
+    {
+      "id": "TB-APEX-011",
+      "title": "Categorical predictors are target-aware for numeric outcomes",
+      "area": "feature selection",
+      "status": "pass",
+      "severity": "info",
+      "claim": "A target-aware ranker should distinguish a categorical feature that separates a numeric target from an equally cardinal but uninformative feature.",
+      "observed": {
+        "signal": {
+          "name": "signal",
+          "type": "categorical",
+          "score": 93,
+          "reason": "target group separation = 0.75",
+          "status": "Keep"
+        },
+        "noise": {
+          "name": "noise",
+          "type": "categorical",
+          "score": 18,
+          "reason": "target group separation = 0.00",
+          "status": "Drop"
+        }
+      },
+      "reference": {
+        "signal_should_rank_above_noise": true,
+        "suggested_measure": "eta-squared with numeric target grouped by categorical predictor"
+      },
+      "evidence": "The separating category outranks the equal-cardinality noise feature.",
+      "recommendation": "Retain target permutation, monotonic transformation, and imbalanced-category cases."
+    },
+    {
+      "id": "TB-APEX-012",
+      "title": "Exact raw target copies are blocked by the leakage guard",
+      "area": "feature selection",
+      "status": "pass",
+      "severity": "info",
+      "claim": "An exact raw copy of the target under an unrelated name should be surfaced as a leakage hazard rather than recommended as a predictor.",
+      "observed": {
+        "excluded": true,
+        "row": null
+      },
+      "reference": {
+        "expected": "flag exact/near target proxy for review or exclusion"
+      },
+      "evidence": "The exact target copy is excluded or dropped independently of its name.",
+      "recommendation": "Extend coverage to near-copies, monotonic encodings, temporal leakage, and post-outcome fields."
+    },
+    {
+      "id": "TB-APEX-013",
+      "title": "PCA explained-variance ratios agree on complete numeric data",
+      "area": "dimension reduction",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Power iteration plus rank-one deflation should reproduce a full-SVD PCA oracle on a well-conditioned complete matrix.",
+      "observed": {
+        "explained_variance_ratio": [
+          0.999983567225,
+          1.6432775e-05
+        ],
+        "pc1_pc2_abs_dot": 3e-12
+      },
+      "reference": {
+        "sklearn_full_svd_ratio": [
+          0.999983567225,
+          1.6432775e-05
+        ],
+        "orthogonality_target": 0.0
+      },
+      "evidence": "computePCA begins near app.js line 2051 and uses 80 fixed power iterations.",
+      "recommendation": "Retain full-SVD differential tests and add repeated-eigenvalue, ill-conditioned, sparse, and convergence-residual cases."
+    },
+    {
+      "id": "TB-APEX-014",
+      "title": "PCA includes the complete eligible numeric predictor set",
+      "area": "dimension reduction",
+      "status": "pass",
+      "severity": "info",
+      "claim": "The PCA result should enumerate all exclusions and must not imply that it represents the full numeric predictor space when columns were silently capped.",
+      "observed": {
+        "input_numeric_columns": 12,
+        "used_columns": [
+          "x00",
+          "x01",
+          "x02",
+          "x03",
+          "x04",
+          "x05",
+          "x06",
+          "x07",
+          "x08",
+          "x09",
+          "x10",
+          "x11"
+        ],
+        "used_count": 12
+      },
+      "reference": {
+        "expected": "all eligible columns or a visible deterministic selection policy"
+      },
+      "evidence": "All eligible numeric predictors are included.",
+      "recommendation": "Add explicit resource guards and benchmark wide-table behavior before raising practical limits."
+    },
+    {
+      "id": "TB-APEX-015",
+      "title": "PCA missing-value operation order matches the declared oracle",
+      "area": "dimension reduction",
+      "status": "pass",
+      "severity": "info",
+      "claim": "Missing-value handling before PCA needs an explicit, reproducible operation order.",
+      "observed": {
+        "apex_ratio": [
+          0.450018130619,
+          0.300244184643
+        ]
+      },
+      "reference": {
+        "sklearn_mean_impute_then_scale_ratio": [
+          0.450018130619,
+          0.300244184643
+        ]
+      },
+      "evidence": "Apex reproduces the mean-impute-then-scale PCA reference on the missingness fixture.",
+      "recommendation": "Retain fixtures with asymmetric missingness and fit transformations on training data only for modeling."
+    },
+    {
+      "id": "TB-APEX-016",
+      "title": "Missing-token policy is deterministic but domain-sensitive",
+      "area": "data semantics",
+      "status": "limitation",
+      "severity": "low",
+      "claim": "String sentinels should be configurable because tokens such as '-' may be legitimate categorical values.",
+      "observed": {
+        "inputs": [
+          null,
+          "",
+          "NA",
+          "n/a",
+          "-",
+          "None",
+          "0",
+          0
+        ],
+        "is_missing": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false
+        ]
+      },
+      "reference": {
+        "expected_product_behaviour": "publish and permit override of missing-token vocabulary"
+      },
+      "evidence": "isMissing near app.js line 383 hardcodes the sentinel set.",
+      "recommendation": "Display the active sentinel policy at import, support per-column overrides, and record it in pipeline JSON."
+    }
+  ]
+}

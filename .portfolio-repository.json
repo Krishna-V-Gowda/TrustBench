@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "owner": "Krishna-V-Gowda",
+  "repository": "TrustBench",
+  "managed_by": "KVG_LAB_FINAL",
+  "public_intent": true,
+  "role": "flagship",
+  "identity": "analytical correctness and exact-source differential verification",
+  "version": "0.1.0"
+}

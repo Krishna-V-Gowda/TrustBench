@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="470" viewBox="0 0 1280 470" role="img" aria-labelledby="title desc">
+  <title id="title">TrustBench exact-source verification architecture</title>
+  <desc id="desc">Shipped source is fingerprinted and extracted into an isolated Node runtime, then compared with independent Python references and metamorphic invariants.</desc>
+  <rect width="1280" height="470" fill="#f4f6f3"/>
+  <style>.b{fill:#fff;stroke:#253d45;stroke-width:2}.a{fill:#e4f1ed;stroke:#356258;stroke-width:2}.w{fill:#f6ead8;stroke:#795b31;stroke-width:2}.h{font:700 19px system-ui,sans-serif;fill:#17282e}.t{font:14px system-ui,sans-serif;fill:#3b4e54}.m{font:13px ui-monospace,monospace;fill:#344a50}.l{stroke:#4b6670;stroke-width:2.5;fill:none;marker-end:url(#x)}</style>
+  <defs><marker id="x" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0L0 6L9 3z" fill="#4b6670"/></marker></defs>
+  <text x="50" y="50" class="h">EXACT-SOURCE VERIFICATION PIPELINE</text>
+  <rect x="50" y="100" width="180" height="105" rx="12" class="a"/><text x="70" y="135" class="h">Shipped app.js</text><text x="70" y="163" class="m">SHA-256 locked</text><text x="70" y="186" class="t">no rewritten formulas</text>
+  <rect x="280" y="100" width="205" height="105" rx="12" class="b"/><text x="300" y="135" class="h">Node extractor</text><text x="300" y="163" class="t">27 named functions</text><text x="300" y="186" class="m">fails closed</text>
+  <rect x="535" y="100" width="205" height="105" rx="12" class="b"/><text x="555" y="135" class="h">JSON protocol</text><text x="555" y="163" class="t">deterministic boundary</text><text x="555" y="186" class="m">typed outcomes</text>
+  <rect x="790" y="82" width="205" height="140" rx="12" class="a"/><text x="810" y="117" class="h">Independent checks</text><text x="810" y="147" class="t">Python references</text><text x="810" y="172" class="t">metamorphic properties</text><text x="810" y="197" class="t">pathological fixtures</text>
+  <rect x="1045" y="100" width="185" height="105" rx="12" class="w"/><text x="1065" y="135" class="h">Finding</text><text x="1065" y="163" class="t">pass / divergence</text><text x="1065" y="186" class="t">limit / invariant</text>
+  <path d="M230 152H270" class="l"/><path d="M485 152H525" class="l"/><path d="M740 152H780" class="l"/><path d="M995 152H1035" class="l"/>
+  <rect x="360" y="305" width="560" height="105" rx="12" class="b"/><text x="390" y="340" class="h">Reproducible remediation record</text><text x="390" y="369" class="t">counterexample + source hashes + exact patch + before/after report + interpretation boundary</text><path d="M1138 205V266H920" class="l"/>
+</svg>

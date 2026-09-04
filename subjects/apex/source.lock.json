@@ -1,0 +1,10 @@
+{
+  "subject": "EDA InsightLab Apex browser statistics engine",
+  "repository": "https://github.com/Krishna-V-Gowda/EDA-InsightLab-Apex",
+  "branch": "main",
+  "relative_path": "assets/js/app.js",
+  "sha256": "a15f8c9830c2729392e02e54abe2c62a3caba885b08f3aba8b575d522a2ef395",
+  "lock_scope": "file-content fingerprint",
+  "note": "The uploaded source snapshot did not include Git metadata. The file hash is authoritative for this report; a future release should also pin a commit SHA.",
+  "bundled_snapshot": "snapshots/apex-v1.0.0-app.js"
+}
