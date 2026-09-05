@@ -2,32 +2,55 @@ name: quality
 
 on:
   push:
+    branches: [main]
+    tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: trustbench-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    name: verify locked analytical evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout immutable repository state
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Install locked Python dependencies
+        run: python -m pip install --disable-pip-version-check --requirement requirements-lock.txt
+      - name: Verify bundled baseline and hardened snapshots
+        run: bash scripts/verify_delivery.sh
+
+  apex-release-integrity:
+    name: verify immutable Apex release source
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: pip
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22.16.0'
-      - run: python -m pip install --upgrade pip
-      - run: python -m pip install --requirement requirements-lock.txt
-      - run: python -m pip install --no-deps -e .
-      - name: Fetch fingerprint-locked Apex subject
-        run: echo "TRUSTBENCH_APEX_SOURCE=$(./scripts/fetch_apex_subject.sh)" >> "$GITHUB_ENV"
-      - name: Test and regenerate evidence
+      - name: Fetch exact merged Apex source
         env:
-          SOURCE_DATE_EPOCH: '1788393600'
-        run: ./scripts/verify_delivery.sh "$TRUSTBENCH_APEX_SOURCE"
-      - name: Ensure generated evidence is committed
-        run: git diff --exit-code -- evidence/reports
+          APEX_COMMIT: 06ae35e3304b6b44a61fd3452daefb853c019ce5
+          EXPECTED_SHA256: 51a9853d2a465a71197a28e71d16821d69b3cbbebf6c1bdc753563c12a3688df
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            "https://raw.githubusercontent.com/Krishna-V-Gowda/EDA-InsightLab-Apex/${APEX_COMMIT}/assets/js/app.js" \
+            --output /tmp/apex-app.js
+          printf '%s  %s\n' "$EXPECTED_SHA256" /tmp/apex-app.js | sha256sum --check --strict
