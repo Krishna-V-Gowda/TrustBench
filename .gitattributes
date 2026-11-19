@@ -1,0 +1,5 @@
+# The Apex snapshots are the bundled subject under test, not TrustBench source.
+# Excluding them from language statistics lets GitHub report TrustBench as the
+# Python project it is.
+subjects/apex/snapshots/*.js linguist-vendored
+evidence/** linguist-generated
