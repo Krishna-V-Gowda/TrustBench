@@ -8,6 +8,8 @@
 
 TrustBench extracts selected algorithms from the *exact shipped source* of an analytical product, fingerprints that source, compares results with independent numerical references, and probes invariants that example-based unit tests often miss.
 
+> **See it run live:** your browser downloads the deployed Apex build, computes its SHA-256 and compares it with the fingerprint TrustBench recorded below. [Open the live proof](https://krishna-v-gowda.github.io/systems/trustbench.html). Part of [Krishna V. Gowda's portfolio](https://krishna-v-gowda.github.io/).
+
 The first subject is the browser-side statistical engine inside **EDA InsightLab Apex**. The first controlled cycle preserves both the uncomfortable baseline and the post-repair result:
 
 | Same 16 checks | Uploaded source | Apex v1.0.1 |
